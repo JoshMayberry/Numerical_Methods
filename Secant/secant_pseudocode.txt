@@ -1,0 +1,11 @@
+Psudocode for Secant Methood
+
+The user inputs the function name, coefficents, the xbounds, and the desired error.
+The left bound is 'x-1' and the right bound is 'x0'.
+Calculate how many times it should loop.
+Start a loop:
+    Calculate 'x+1'.
+    Calculate the error
+    Set x-1 to x0, and x0 to xnew.
+    Repeat.
+Display the final result as x-1.

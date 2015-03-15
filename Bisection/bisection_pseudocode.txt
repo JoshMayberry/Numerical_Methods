@@ -1,0 +1,25 @@
+Bisection Methood Function
+    Input the formula you wish you check and the boundaries.
+    Check that the function is = 0. If not, ask the user to re-arrange it so it does = 0.
+    If f(boundary1) and f(boundary2) are opposite signs, this has a root and is valid.
+    If not, tell the user to choose different boundaries. (Only continue if there exists a root)
+    Let 'half' = 1/2 the interval, and check if there is a change in sign between 'half' and the two origonal boundaries.
+    Whichever interval it passed through, 1/2 the interval between 'half' and the respective origonal boundary. Name this 'NewHalf'.
+    Check the intervals between the origonal, 'NewHalf', and 'half'. Take that interval and re-name it's boundaries 'Boundary 1' and 'Boundary 2'.
+    1/2 the interval between boundary 1 and boundary 2, and name that 'half'.
+    Loop until the desired accuracy is met:
+        Check the intervals between 'half' and boundary1 and boundary2. Take that interval and re-name it's boundaries 'Boundary 1' and 'Boundary 2'.
+        1/2 the interval between boundary 1 and boundary 2, and name that 'half'.
+    Print the approximated value of the root.
+
+Class Bisection Psudocode
+    Input two values (boundaries) and a function [and a desired %error]
+    Calculate the values for the two inputs & store them.
+    [Make sure they have two opposite signs, and STOP if they don't.]
+    While or for Loop [until % error reached]
+        Calculate the new root estimate
+        Calculate the functional value
+        Choose which old root value to replace
+        [Calculate % error]
+    Return root [& % error]
+     
