@@ -25,9 +25,8 @@ def cfit(x,y,filename,flag,fitType):
     """
 
     temp = check(x,y,filename,flag,fitType)
-    x,y = temp[0],temp[1]
-    if temp[2] == 1:
-        #print('check worked')
+    x,y,fitType = temp[0],temp[1],temp[2]
+    if temp[3] == 1:
         if (fitType == 'all') or (fitType =='best'):
             temp = [(lineGenerator(x,y,'line'))]
             temp.append(lineGenerator(x,y,'log'))
@@ -37,20 +36,18 @@ def cfit(x,y,filename,flag,fitType):
             temp.append(lineGenerator(x,y,'third'))
             temp.append(lineGenerator(x,y,'fourth'))
             if fitType == 'best':
-                #print ('best')
                 temp = optimizer(np.transpose(np.array(temp)).tolist())
-                print('from optimizer: ',temp)
             else:
                 temp = np.transpose(np.array(temp)).tolist()
                 temp[1] = (np.array(temp[1]).flatten().tolist())
         else:
             temp = lineGenerator(x,y,fitType)
-        showplots(x,y,temp)
+        showplots(x,y,temp,fitType)
         eqn = temp[1]
         r2 = temp[0][1]
-        #return eqn,r2
+        return eqn,r2
     else:
-        print('failed the check')
+        print('failed the check') #program ends
        
 #The Black Box
 def check(x,y,filename,flag,fitType):
@@ -60,26 +57,29 @@ def check(x,y,filename,flag,fitType):
     'n' is wether the other checks failed or not.
     Example Input: optimizer(np.array([0.5,0.9,1.7,2.4]),np.array([8.7,9.3,10.6,12.1]),2,0)
     """
+    n = 1
 
-    if flag == 1:   
-        if len(x) > len(y):
-            print('Your x-list is larger than your y-list.')
-        elif len(y) > len(x):
-            print('Your y-list is larger than your x-list.')
-        if type(x) != np.ndarray:
-            print('Your x-list is not an np.array')
-        if type(y) != np.ndarray:
-            print('Your y-list is not an np.array')
-    else:
+    if flag == 2:
         data = np.loadtxt(filename)
         x = data[:,0]
         y = data[:,1]
-    #Check for multi-dimensionsal
-    #Check that there are not too many choices
-
-    #Have it return wether or not it is good. If not, the whole thing stops.       
-    n = 1
-    return [x,y,n]
+    if len(x) > len(y):
+        print('Your x-list is larger than your y-list.')
+        n = 0
+    elif len(y) > len(x):
+        print('Your y-list is larger than your x-list.')
+        n = 0
+    if type(x) != np.ndarray:
+        print("Your x-list is not an np.array. I'll fix that for you")
+        x = np.array(x)
+    if type(y) != np.ndarray:
+        print("Your y-list is not an np.array. I'll fix that for you")
+        y = np.array(x)
+    fitType = fitType.lower() #Gets rid of any accidental caps for you
+    if fitType not in ('line','log','power','exp','second','third','fourth','all','best'):
+        print('I do not understand the fitType you gave me. Please make sure you spelled it correctly.')
+        n = 0
+    return [x,y,fitType,n]
 
 def lineGenerator(x,y,fitType):
     """This determines which type of trendline(s) should be computed."""
@@ -103,9 +103,6 @@ def optimizer(myList):
     """Finds the best two fits for the trendlines"""
     eqns = np.transpose(np.array(myList[1])).tolist()
     myList = np.transpose(np.array(myList[0])).tolist()
-    #print(myList,'\n')
-    #print(myList[0],'\n')
-    #print(myList[1],'\n')
     solvedMax,r2Max,eqnMax = [],[],[]
     for i in range(2):
         n = np.array(myList[1]).flatten().argmax()
@@ -114,41 +111,38 @@ def optimizer(myList):
         eqnMax.append(eqns[0][i])
         myList[1][n] = [0]
         myList[0][n] = [0]
-    #print('optimized: ', solvedMax,r2Max,eqn)
     return [[solvedMax,r2Max],eqnMax]
 
-def trendline(x,y,eqnType):
+def trendline(x,y,fitType):
     """This creates various types of trendlines from lists of data in the form of numpy arrays.
     It returns the a & b values as a list, as well as the r2 value.
 
     Example Input: trendline(np.array([0.5,0.9,1.7,2.4]),np.array([8.7,9.3,10.6,12.1]),'line')
     """
-    #print(x,y)
-    #print(eqnType)
-    if type(eqnType)==str:
+    if type(fitType)==str:
         n = len(x)
-        if eqnType == 'line':
+        if fitType == 'line':
             sumx = np.sum(x)
             sumy = np.sum(y)
             sumxy = np.sum(x*y)
             sumx2 = np.sum(x**2)
             sumy2 = np.sum(y**2)
             
-        elif eqnType == 'power':
+        elif fitType == 'power':
             sumx = np.sum(np.log(x))
             sumy = np.sum(np.log(y))
             sumxy = np.sum(np.log(x)*np.log(y))
             sumx2 = np.sum(np.log(x)**2)
             sumy2 = np.sum(np.log(y)**2)
 
-        elif eqnType == 'exp':
+        elif fitType == 'exp':
             sumx = np.sum(x)
             sumy = np.sum(np.log(y))
             sumxy = np.sum(x*np.log(y))
             sumx2 = np.sum(x**2)
             sumy2 = np.sum(np.log(y)**2)
 
-        elif eqnType == 'log': #This one doesn't work
+        elif fitType == 'log':
             sumx = np.sum(np.log(x))
             sumy = np.sum(y)
             sumxy = np.sum(np.log(x)*y)
@@ -160,36 +154,29 @@ def trendline(x,y,eqnType):
         solved = np.linalg.solve(A,b)      
         r2 = (solved[0,0]*sumy+solved[1,0]*sumxy-1/n*sumy**2)/(sumy2-1/n*sumy**2)
 
-        if eqnType == 'power':
+        if fitType == 'power':
             solved[0,0] = np.exp(solved[0,0])
-        elif eqnType == 'exp':
+        elif fitType == 'exp':
             solved[0,0] = np.exp(solved[0,0])
-            #y = e(y)
             
     else:
-        #The eqnType is the order that the polynomial is.
+        #The fitType is the order that the polynomial is.
         sumxList,sumyList,b,r2 = [],[],[],0
         n = len(x)
         A = [[n]]
-        for i in range(eqnType*2): #Create a list that ranges from x^1 to x^n
+        for i in range(fitType*2): #Create a list that ranges from x^1 to x^n
             sumxList.append(np.sum(x**(i+1)))
-            sumyList.append(np.sum(x**(i)*y))
-        
-        for i in range(eqnType): #Initialize the A
-            A.append([sumxList[i]])
-        
-        for j in range(eqnType+1):#Set up the A and b
-            for i in range(eqnType):
+            sumyList.append(np.sum(x**(i)*y))      
+        for i in range(fitType): #Initialize the A
+            A.append([sumxList[i]])        
+        for j in range(fitType+1):#Set up the A and b
+            for i in range(fitType):
                 A[j].append(sumxList[i+j])
-            b.append(sumyList[j])
-        
+            b.append(sumyList[j])        
         A = np.array(A)
         b = np.array(b).transpose()
-
-        #Solve it
         solved = np.linalg.solve(A,b)
-
-        for i in range(eqnType+1):
+        for i in range(fitType+1):
             r2 += solved[i]*sumyList[i]
         r2 = (r2-sumyList[0]**2/n)/(np.sum(y**2)-1/n*sumyList[0]**2)
     return [solved.tolist(),[r2]]
@@ -197,53 +184,78 @@ def trendline(x,y,eqnType):
 def equation(solved,fitType):
     """This creates an equation for the trendline
     Example Input: equation([[[7.7307334109429595], [1.7776484284051208]], 0.99394696088416035],'line')"""
-    #print(solved)
     
-    if fitType == 'line':
-        eqn = ('y='+str(solved[0][0][0])+'+'+str(solved[0][1][0])+'*x')
-    elif fitType == 'power':
-        eqn = ('y='+str(solved[0][0][0])+'*x**('+str(solved[0][1][0])+')')
-    elif fitType == 'exp':
-        eqn = ('y='+str(solved[0][0][0])+'*np.exp('+str(solved[0][1][0])+'*x)')
-    elif fitType == 'log':
-        eqn = ('y='+str(solved[0][0][0])+'+'+str(solved[0][1][0])+'*np.log(x)')
+    if fitType == 'line': eqn = ('y='+str(solved[0][0][0])+'+'+str(solved[0][1][0])+'*x')
+    elif fitType == 'power': eqn = ('y='+str(solved[0][0][0])+'*x**('+str(solved[0][1][0])+')')
+    elif fitType == 'exp': eqn = ('y='+str(solved[0][0][0])+'*np.exp('+str(solved[0][1][0])+'*x)')
+    elif fitType == 'log': eqn = ('y='+str(solved[0][0][0])+'+'+str(solved[0][1][0])+'*np.log(x)')
     else: 
         if fitType == 'second': n = 2
         elif fitType == 'third': n = 3
         elif fitType == 'fourth': n = 4
         eqn = 'y='+str(solved[0][0])+'+'+str(solved[0][1])+'*x'
-        for i in range(n-1):
-            eqn += '+'+str(solved[0][i+2])+'*x**'+str(i+2)
-    #print(eqn,'\n')
+        for i in range(n-1): eqn += '+'+str(solved[0][i+2])+'*x**'+str(i+2)
     return eqn
 
-def showplots(xlist,ylist,answer):
+def showplots(xlist,ylist,answer,fitType):
     """This creates a dynamic plot(s) for the trendlines.
 
     Example Input: optimizer(np.array([0.5,0.9,1.7,2.4]),np.array([8.7,9.3,10.6,12.1]),2,0)
     """
-    print('\nshowplots: ', answer,'\n')
+    myLegends = ['given']
     h = 50 #step scalar
     x = np.arange(xlist.min(),xlist.max(),(xlist.max()-xlist.min())/h)
-    plt.figure(1)
-    plt.plot(xlist,ylist,'k-')
+    plt.figure(1,figsize=(8,4))
+    plt.plot(xlist,ylist,'ko')
     for j in range(len(answer[1])):
-        if j<6:
+        if j<7:
             if j%2 == 0:
                 if j == 0: lnStl = 'Purple'
-                elif j == 2: lnStl = 'Orange'
-                elif j == 4: lnStl = 'g-'
+                elif j == 2: lnStl = 'OrangeRed'
+                elif j == 4: lnStl = 'y-'
+                elif j == 6: lnStl = 'b-'
             else:
                 if j == 1: lnStl = 'r-'
-                elif j == 3: lnStl = 'y-'
-                elif j == 5: lnStl = 'b-'
-        else:
-            lnStl = 'w--'
-        #print(answer[1][j])
-        #print(np.transpose(answer[j]).tolist())
-        #print(eval(answer[1][j].strip('y=')))
-        print(answer[1][j])
+                elif j == 3: lnStl = 'Orange'
+                elif j == 5: lnStl = 'g-'
+        else: lnStl = 'w--'
+        if fitType == 'best':
+            plt.figure(2,figsize=(16,8))
+            plt.subplot(2,1,j+1)
+            if 'e**' in answer[1][j]: myLegends.append('exp')
+            elif 'log' in answer[1][j]: myLegends.append('log')
+            elif '**4' in answer[1][j]: myLegends.append('fourth')
+            elif '**3' in answer[1][j]: myLegends.append('third')
+            elif '**2' in answer[1][j]: myLegends.append('second')
+            elif '**' in answer[1][j]: myLegends.append('power')
+            else: myLegends.append('line')
+        elif fitType == 'all':
+            plt.figure(2,figsize=(16,8))
+            plt.subplot(3,3,j+1)
+            if j == 0: myLegends.append('line')
+            elif j == 1: myLegends.append('log')
+            elif j == 2: myLegends.append('power')
+            elif j == 3: myLegends.append('exp')
+            elif j == 4: myLegends.append('second')
+            elif j == 5: myLegends.append('third')
+            elif j == 6: myLegends.append('fourth')
+        else: myLegends.append(fitType)
+        plt.plot(xlist,ylist,'ko')        
         plt.plot(x,eval(answer[1][j].strip('y=')),lnStl)
+        plt.figure(1)
+        plt.plot(x,eval(answer[1][j].strip('y=')),lnStl)       
+    plt.figure(1)
+    plt.legend(myLegends)
+    if fitType == 'best':
+        plt.figure(2)
+        for j in range(len(answer[1])):
+            plt.subplot(2,1,j+1)
+            plt.legend(['given',myLegends[j+1]])
+    elif fitType == 'all':
+        plt.figure(2)
+        for j in range(len(answer[1])):
+            plt.subplot(3,3,j+1)
+            plt.legend(['given',myLegends[j+1]])
     plt.show()
 
 
