@@ -1,3 +1,24 @@
+#Curve Fit Program
+#This program creates trendlines from data points
+#By: Joshua Mayberry
+#
+#########################################
+#                                       #
+#           Table of Contents           #
+#                                       #
+#   Main Program............26 - 70     #
+#   Check Program...........73 - 102    #
+#   Line Generator Logic...104 - 120    #
+#   Trendline Optimiser....122 - 134    #
+#   Trendline Generator....136 - 201    #
+#   Equation Generator.....203 - 217    #
+#   Plot Generator.........219 - 282    #
+#                                       #
+#########################################
+
+#Psudocode: Import Values, Check that thsoe values are valid, Generate the trendlines, plot them.
+    #The trendline generator must be smart and be able to create different types of trendlines, and their equations. 
+
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,8 +67,7 @@ def cfit(x,y,filename,flag,fitType):
         eqn = temp[1]
         r2 = temp[0][1]
         return eqn,r2
-    else:
-        print('failed the check') #program ends
+    else: print('failed the check') #program ends
        
 #The Black Box
 def check(x,y,filename,flag,fitType):
@@ -154,10 +174,9 @@ def trendline(x,y,fitType):
         solved = np.linalg.solve(A,b)      
         r2 = (solved[0,0]*sumy+solved[1,0]*sumxy-1/n*sumy**2)/(sumy2-1/n*sumy**2)
 
-        if fitType == 'power':
-            solved[0,0] = np.exp(solved[0,0])
-        elif fitType == 'exp':
-            solved[0,0] = np.exp(solved[0,0])
+        if fitType == 'power': solved[0,0] = np.exp(solved[0,0])
+        elif fitType == 'exp': solved[0,0] = np.exp(solved[0,0])
+
             
     else:
         #The fitType is the order that the polynomial is.
@@ -256,6 +275,10 @@ def showplots(xlist,ylist,answer,fitType):
         for j in range(len(answer[1])):
             plt.subplot(3,3,j+1)
             plt.legend(['given',myLegends[j+1]])
+    if fitType in ('all','best'):
+        plt.figure(1).canvas.set_window_title('All Lines')
+        plt.figure(2).canvas.set_window_title('Individual Lines')
+    else: plt.figure(1).canvas.set_window_title('Curve Fit')
     plt.show()
 
 
